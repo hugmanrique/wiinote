@@ -67,7 +67,7 @@ impl Lights {
     pub fn scale(value: u8) -> Self {
         let bits = value >> 6; // 0..4
         let mut enabled = 1;
-        for i in 0..bits {
+        for i in 0..=bits {
             enabled |= 1 << i;
         }
 
@@ -217,5 +217,22 @@ impl OutputReport {
             }
         };
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Lights;
+
+    #[test]
+    fn light_scale() {
+        assert_eq!(Lights::scale(0), Lights::ONE);
+        assert_eq!(Lights::scale(63), Lights::ONE);
+        assert_eq!(Lights::scale(127), Lights::ONE | Lights::TWO);
+        assert_eq!(
+            Lights::scale(191),
+            Lights::ONE | Lights::TWO | Lights::THREE
+        );
+        assert_eq!(Lights::scale(u8::MAX), Lights::all());
     }
 }
