@@ -95,6 +95,9 @@ impl Wiimote {
     }
 
     async fn set_mode(&mut self, mode: LightsMode) -> Result<()> {
+        if self.mode != mode {
+            return Ok(());
+        }
         self.mode = mode;
         self.send_heartbeat().await
     }
