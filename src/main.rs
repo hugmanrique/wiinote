@@ -1,14 +1,11 @@
-use crate::keyboard::Keyboard;
-
-
-use crate::connection::Connection;
-use crate::report::OutputReport;
-use crate::wiimote::Wiimote;
 use anyhow::{anyhow, Result};
 use bluer::{AdapterEvent, Device};
 use futures::{pin_mut, StreamExt};
 
-
+use crate::connection::Connection;
+use crate::keyboard::Keyboard;
+use crate::report::OutputReport;
+use crate::wiimote::Wiimote;
 
 mod connection;
 mod keyboard;

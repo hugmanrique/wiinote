@@ -1,11 +1,13 @@
-use crate::report::{InputReport, ReportError};
-use crate::OutputReport;
+use std::io::Cursor;
+
 use anyhow::{anyhow, Result};
 use bluer::l2cap::{SocketAddr, Stream};
 use bluer::{AddressType, Device};
 use bytes::{Buf, BytesMut};
-use std::io::Cursor;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
+
+use crate::report::{InputReport, ReportError};
+use crate::OutputReport;
 
 /// Send and receive reports from a Wiimote.
 pub struct Connection {

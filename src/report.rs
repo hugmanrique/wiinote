@@ -1,12 +1,11 @@
-use anyhow::Result;
-use bitflags::bitflags;
-use bluer::l2cap;
-use bytes::Buf;
-
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 
+use anyhow::Result;
+use bitflags::bitflags;
+use bluer::l2cap;
+use bytes::Buf;
 use tokio::io::{AsyncWriteExt, BufWriter};
 
 #[derive(Debug, Clone)] // todo: rustc gives a warning saying these are ignored?

@@ -1,10 +1,12 @@
+use std::time::Duration;
+
+use anyhow::Result;
+use bluer::Device;
+use tokio::time;
+
 use crate::connection::Connection;
 use crate::report::{Buttons, InputReport, Lights};
 use crate::{Keyboard, OutputReport};
-use anyhow::Result;
-use bluer::Device;
-use std::time::Duration;
-use tokio::time;
 
 /// Indicates the metric to display using the Wiimote lights.
 #[derive(Eq, PartialEq)]

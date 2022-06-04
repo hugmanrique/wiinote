@@ -1,7 +1,8 @@
-use crate::report::Buttons;
 use anyhow::Result;
 use uinput::event::keyboard::{Key, Misc};
 use uinput::{event, Device};
+
+use crate::report::Buttons;
 
 static DEV_NAME: &str = "Wiinote";
 
