@@ -8,7 +8,7 @@ use bluer::l2cap;
 use bytes::Buf;
 use tokio::io::{AsyncWriteExt, BufWriter};
 
-#[derive(Debug, Clone)] // todo: rustc gives a warning saying these are ignored?
+#[derive(Debug, Clone)]
 pub enum ReportError {
     Incomplete,
     InvalidTransHeader(u8),

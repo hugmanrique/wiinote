@@ -51,7 +51,7 @@ impl Buttons {
             Buttons::PLUS => event::Keyboard::Misc(Misc::VolumeUp),
             Buttons::HOME => event::Keyboard::Key(Key::Esc),
             Buttons::MINUS => event::Keyboard::Misc(Misc::VolumeDown),
-            // todo: add events for button combinations. This also requires changing `update()`
+            // todo: add events for button combinations
             _ => return None,
         })
     }

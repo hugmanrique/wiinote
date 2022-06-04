@@ -9,7 +9,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use crate::report::{InputReport, ReportError};
 use crate::OutputReport;
 
-/// Send and receive reports from a Wiimote.
+/// Sends and receives reports from a Wiimote.
 pub struct Connection {
     device: Device,
     _control_stream: Stream,
