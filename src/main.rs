@@ -1,7 +1,7 @@
 use anyhow::Result;
 use bluer::agent::{Agent, ReqError};
-use bluer::l2cap::{SocketAddr, StreamListener};
-use bluer::{Adapter, AdapterEvent, AddressType, Device, Session};
+
+use bluer::{Adapter, AdapterEvent, Device, Session};
 use clap::Parser;
 use futures::{future, pin_mut, StreamExt};
 
@@ -23,11 +23,11 @@ struct Args {
     /// On disconnection, the Wiimote attempts to re-establish
     /// the connection to the last paired host if any button is
     /// pressed. Otherwise, the Wiimote must be placed in discoverable
-    /// mode (by pressing the sync button on its back) to re-connect.
+    /// mode to re-connect.
     ///
-    /// Pairing is required when connecting to a Wiimote that
-    /// was placed in discoverable mode by pressing the 1 and
-    /// 2 buttons continuously.
+    /// Pairing is required when connecting to a `RVL-CNT-01-TR`
+    /// Wiimote model that was placed in discoverable mode by
+    /// pressing the 1 and 2 buttons.
     #[clap(long, takes_value = false)]
     pair: bool,
 }
@@ -43,15 +43,10 @@ async fn main() -> Result<()> {
     println!("Opening keyboard device");
     let mut keyboard = Keyboard::default()?;
 
-    loop {
-        let connection = match discover(&session, &adapter, args.pair).await? {
-            Some(connection) => connection,
-            // `discover()` and `listen()` return `None` when the
-            // application is shutdown.
-            None => break,
-        };
-
+    // `discover()` returns `None` when the application is shutdown.
+    while let Some(connection) = discover(&session, &adapter, args.pair).await? {
         println!("Device connected: {}", connection.device().address());
+
         let mut wiimote = Wiimote::new(connection);
         wiimote.run(&mut keyboard).await?; // todo: handle errors gracefully
     }
@@ -83,8 +78,6 @@ async fn discover(session: &Session, adapter: &Adapter, pair: bool) -> Result<Op
             _ => continue,
         };
 
-        // todo: ensure device is in range. The docs recommend using the `rssi` property.
-        //       Don't throw if an error occurs, instead `continue` with next device.
         let device = adapter.device(addr)?;
         let alias = device.alias().await?;
         if alias == "Nintendo RVL-CNT-01" || alias == "Nintendo RVL-CNT-01-TR" {
