@@ -17,8 +17,8 @@ pub struct Connection {
     buffer: BytesMut,
 }
 
-const CONTROL_PSM: u16 = 0x11;
-const DATA_PSM: u16 = 0x13;
+pub const CONTROL_PSM: u16 = 0x11;
+pub const DATA_PSM: u16 = 0x13;
 
 impl Connection {
     /// Connects to the Wiimote without pairing.

@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use anyhow::Result;
 use bluer::Device;
+use time::interval_at;
 use tokio::time;
+use tokio::time::Instant;
 
 use crate::connection::Connection;
 use crate::report::{Buttons, InputReport, Lights};
@@ -39,7 +41,11 @@ impl Wiimote {
     }
 
     pub async fn run(&mut self, keyboard: &mut Keyboard) -> Result<()> {
-        let mut heartbeat = time::interval(Duration::from_secs(10));
+        // Writing immediately to the socket results in a "Transport endpoint
+        // is not connected" error. Delay the initial heartbeat report.
+        let start_send = Instant::now() + Duration::from_secs(1);
+        let mut heartbeat = interval_at(start_send, Duration::from_secs(10));
+
         loop {
             // Listen for the shutdown signal while reading a report.
             let maybe_report = tokio::select! {
@@ -47,10 +53,8 @@ impl Wiimote {
                 _ = heartbeat.tick() => {
                     self.send_heartbeat().await?;
                     continue;
-                }
-                _ = tokio::signal::ctrl_c() => {
-                    return Ok(());
-                }
+                },
+                _ = tokio::signal::ctrl_c() => return Ok(()),
             };
 
             let report: InputReport = match maybe_report {
