@@ -62,8 +62,10 @@ bitflags! {
 }
 
 impl Lights {
-    pub fn from_level(level: u8) -> Self {
-        let bits = level >> 6; // 0..4
+    /// Represents the given value as a linear scale on
+    /// the four Wiimote lights.
+    pub fn scale(value: u8) -> Self {
+        let bits = value >> 6; // 0..4
         let mut enabled = 1;
         for i in 0..bits {
             enabled |= 1 << i;

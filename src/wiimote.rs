@@ -69,7 +69,7 @@ impl Wiimote {
             // todo: reset the DRM when an extension is plugged.
             if self.mode == LightsMode::Battery {
                 if let InputReport::Status { battery, .. } = report {
-                    self.set_lights(Lights::from_level(battery)).await?;
+                    self.set_lights(Lights::scale(battery)).await?;
                 }
             }
         }
@@ -97,7 +97,7 @@ impl Wiimote {
                 let rssi = self.device().rssi().await?.unwrap_or(0);
                 let level = rssi * u8::MAX as i16 / -80;
 
-                self.set_lights(Lights::from_level(level as u8)).await
+                self.set_lights(Lights::scale(level as u8)).await
             }
             LightsMode::Battery => {
                 // The status report sent in response to the heartbeat
