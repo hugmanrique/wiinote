@@ -14,6 +14,7 @@ anyhow = "1.0.56"
 bitflags = { git = "https://github.com/bitflags/bitflags" }
 bluer = { version = "0.15.0", features = ["bluetoothd", "l2cap"] }
 bytes = "1.1.0"
+clap = { version = "3.1.18", features = ["derive"] }
 futures = "0.3.21"
 tokio = { version = "1.18.2", features = ["macros", "rt", "rt-multi-thread", "signal"] }
 # todo: uinput-tokio errors don't implement the std:error::Error trait,

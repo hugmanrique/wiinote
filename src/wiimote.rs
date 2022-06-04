@@ -22,6 +22,8 @@ pub struct Wiimote {
     mode: LightsMode,
     /// The light states, as written in the last `OutputReport` sent.
     prev_lights: Lights,
+    /// We are awaiting a `InputReport::Status` in response to a heartbeat.
+    awaiting_status: bool,
 }
 
 impl Wiimote {
@@ -32,6 +34,7 @@ impl Wiimote {
             // high immediately after pairing.
             mode: LightsMode::Battery,
             prev_lights: Lights::all(),
+            awaiting_status: false,
         }
     }
 
@@ -64,12 +67,23 @@ impl Wiimote {
                 _ => {}
             };
 
-            // Update the remote lights upon receiving a status report,
-            // which can requested by `send_heartbeat()`.
-            // todo: reset the DRM when an extension is plugged.
-            if self.mode == LightsMode::Battery {
-                if let InputReport::Status { battery, .. } = report {
-                    self.set_lights(Lights::scale(battery)).await?;
+            if let InputReport::Status { battery, .. } = report {
+                if self.awaiting_status {
+                    self.awaiting_status = false;
+
+                    // The status report was requested by `send_heartbeat()`,
+                    // update the remote lights.
+                    if self.mode == LightsMode::Battery {
+                        self.set_lights(Lights::scale(battery)).await?;
+                    }
+                } else {
+                    // An extension was plugged or unplugged, reset the DRM.
+                    self.connection
+                        .write(&OutputReport::SetDrm {
+                            lights: self.prev_lights,
+                            mode: 0x30, // Core Buttons (default)
+                        })
+                        .await?;
                 }
             }
         }
@@ -86,6 +100,7 @@ impl Wiimote {
                 lights: self.prev_lights,
             })
             .await?;
+        self.awaiting_status = true;
 
         // Update the remote lights
         match self.mode {

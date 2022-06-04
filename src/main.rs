@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use bluer::{AdapterEvent, Device};
+use clap::Parser;
 use futures::{pin_mut, StreamExt};
 
 use crate::connection::Connection;
@@ -12,8 +13,17 @@ mod keyboard;
 mod report;
 mod wiimote;
 
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Pairs
+    pair: bool,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    let args = Args::parse();
+
     let device = find_wiimote()
         .await?
         .ok_or_else(|| anyhow!("Cannot find Wiimote Bluetooth device"))?;
