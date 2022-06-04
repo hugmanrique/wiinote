@@ -78,6 +78,7 @@ impl Wiimote {
                     // The status report was requested by `send_heartbeat()`,
                     // update the remote lights.
                     if self.mode == LightsMode::Battery {
+                        println!("battery: {}", battery);
                         self.set_lights(Lights::scale(battery)).await?;
                     }
                 } else {
@@ -114,9 +115,10 @@ impl Wiimote {
                 // The scale goes from -80 to 0, where 0 indicates the greatest
                 // signal strength.
                 let rssi = self.device().rssi().await?.unwrap_or(0);
-                let level = rssi * u8::MAX as i16 / -80;
+                println!("rssi: {}", rssi);
+                let level = (rssi * u8::MAX as i16 / -80) as u8;
 
-                self.set_lights(Lights::scale(level as u8)).await
+                self.set_lights(Lights::scale(!level)).await
             }
             LightsMode::Battery => {
                 // The status report sent in response to the heartbeat

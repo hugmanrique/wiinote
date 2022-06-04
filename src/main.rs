@@ -30,13 +30,6 @@ struct Args {
     /// 2 buttons continuously.
     #[clap(long, takes_value = false)]
     pair: bool,
-    /// Searches and connects to a Wiimote placed in discoverable
-    /// mode by pressing the sync button on its back.
-    ///
-    /// Otherwise, listens for connections by an already paired
-    /// Wiimote.
-    #[clap(long, takes_value = false)]
-    discover: bool,
 }
 
 #[tokio::main]
@@ -51,13 +44,7 @@ async fn main() -> Result<()> {
     let mut keyboard = Keyboard::default()?;
 
     loop {
-        let maybe_connection = if args.discover {
-            discover(&session, &adapter, args.pair).await?
-        } else {
-            listen(&adapter).await?
-        };
-
-        let connection = match maybe_connection {
+        let connection = match discover(&session, &adapter, args.pair).await? {
             Some(connection) => connection,
             // `discover()` and `listen()` return `None` when the
             // application is shutdown.
@@ -66,7 +53,7 @@ async fn main() -> Result<()> {
 
         println!("Device connected: {}", connection.device().address());
         let mut wiimote = Wiimote::new(connection);
-        wiimote.run(&mut keyboard).await?;
+        wiimote.run(&mut keyboard).await?; // todo: handle errors gracefully
     }
     Ok(())
 }
@@ -82,7 +69,7 @@ async fn discover(session: &Session, adapter: &Adapter, pair: bool) -> Result<Op
     assert!(adapter.is_powered().await?);
 
     println!("Discovering using Bluetooth adapter {}\n", adapter.name());
-    let discover = adapter.discover_devices().await?;
+    let discover = adapter.discover_devices_with_changes().await?;
     pin_mut!(discover);
     loop {
         let event = tokio::select! {
@@ -101,7 +88,15 @@ async fn discover(session: &Session, adapter: &Adapter, pair: bool) -> Result<Op
         let device = adapter.device(addr)?;
         let alias = device.alias().await?;
         if alias == "Nintendo RVL-CNT-01" || alias == "Nintendo RVL-CNT-01-TR" {
-            // We found a Wiimote, stop the discovery session.
+            // All known devices are included in the device stream, even those that
+            // are not in range. Ensure that the found Wiimote is in range.
+            // Note that if a known device later comes in range, the device is
+            // discovered again.
+            if device.rssi().await?.is_none() {
+                continue;
+            }
+
+            // Stop the discovery session.
             drop(discover);
 
             if pair {
@@ -116,6 +111,10 @@ async fn discover(session: &Session, adapter: &Adapter, pair: bool) -> Result<Op
 
 /// Pairs the given Wiimote with the host.
 async fn pair(session: &Session, adapter: &Adapter, device: &Device) -> Result<()> {
+    if device.is_paired().await? {
+        return Ok(());
+    }
+
     println!("Pairing {}", device.address());
     // todo: how do we know if the wiimote is being connected by pressing
     //       the 1 + 2 buttons or the sync button? The PIN code is different.
@@ -151,53 +150,4 @@ async fn pair(session: &Session, adapter: &Adapter, device: &Device) -> Result<(
     let _handle = session.register_agent(agent);
 
     device.pair().await.map_err(|err| err.into())
-}
-
-/// Opens the control and data L2CAP sockets and listens for
-/// connections.
-///
-/// # Returns
-/// On success, the Wiimote connection is returned. If the program is
-/// shutdown, it returns `None`. Otherwise, an error is returned.
-async fn listen(adapter: &Adapter) -> Result<Option<Connection>> {
-    let adapter_addr = adapter.address().await?;
-    println!(
-        "Listening on Bluetooth adapter {} with address {}\n",
-        adapter.name(),
-        adapter_addr
-    );
-
-    let control_sa = SocketAddr::new(adapter_addr, AddressType::BrEdr, connection::CONTROL_PSM);
-    let data_sa = SocketAddr::new(adapter_addr, AddressType::BrEdr, connection::DATA_PSM);
-
-    let control_listener = StreamListener::bind(control_sa).await?;
-    let data_listener = StreamListener::bind(data_sa).await?;
-
-    loop {
-        let ((control_stream, control_sa), (data_stream, data_sa)) = tokio::select! {
-            res = async {
-                // Wait for both listeners to accept a connection. The tasks are
-                // IO-bound, so each task can interleave their processing on
-                // the current thread.
-                let control_future = control_listener.accept();
-                let data_future = data_listener.accept();
-                future::try_join(control_future, data_future).await
-            } => res?,
-            _ = tokio::signal::ctrl_c() => break
-        };
-
-        if control_sa != data_sa {
-            // Each listener accepted a connection from a different remote.
-            continue;
-        }
-
-        // Create the `Connection` directly: the Wiimote connected to the
-        // host, so it is already paired.
-        // todo: ensure this is indeed the case
-        // todo: keep list of paired devices and reject if not in list?
-        let device = adapter.device(control_sa.addr)?;
-        let connection = Connection::new(device, control_stream, data_stream);
-        return Ok(Some(connection));
-    }
-    Ok(None)
 }
