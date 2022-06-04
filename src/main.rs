@@ -46,15 +46,17 @@ async fn main() -> Result<()> {
 
     // `discover()` returns `None` when the application is shutdown.
     while let Some(connection) = discover(&session, &adapter, args.pair).await? {
-        println!("Device connected: {}", connection.device().address());
+        let addr = connection.device().address();
+        println!("Device connected: {}", addr);
 
         let mut wiimote = Wiimote::new(connection);
         if let Err(err) = wiimote.run(&mut keyboard).await {
-            match err.downcast_ref::<io::Error>() {
-                // The Wiimote disconnected, restart discovery session.
-                Some(err) if err.kind() == io::ErrorKind::ConnectionReset => continue,
-                _ => return Err(err),
+            println!("Device disconnected: {}", addr);
+
+            if err.downcast_ref::<io::Error>().is_none() {
+                return Err(err);
             }
+            // The Wiimote disconnected, restart discovery session.
         }
     }
     Ok(())
