@@ -1,6 +1,7 @@
+use std::io;
 use std::io::Cursor;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use bluer::l2cap::{SocketAddr, Stream};
 use bluer::{AddressType, Device};
 use bytes::{Buf, BytesMut};
@@ -66,7 +67,7 @@ impl Connection {
                 if self.buffer.is_empty() {
                     return Ok(None);
                 } else {
-                    Err(anyhow!("Connection reset by peer"))?;
+                    Err(io::Error::from(io::ErrorKind::ConnectionReset))?;
                 }
             }
         }

@@ -1,5 +1,6 @@
 use anyhow::Result;
 use bluer::agent::{Agent, ReqError};
+use std::io;
 
 use bluer::{Adapter, AdapterEvent, Device, Session};
 use clap::Parser;
@@ -48,7 +49,13 @@ async fn main() -> Result<()> {
         println!("Device connected: {}", connection.device().address());
 
         let mut wiimote = Wiimote::new(connection);
-        wiimote.run(&mut keyboard).await?; // todo: handle errors gracefully
+        if let Err(err) = wiimote.run(&mut keyboard).await {
+            match err.downcast_ref::<io::Error>() {
+                // The Wiimote disconnected, restart discovery session.
+                Some(err) if err.kind() == io::ErrorKind::ConnectionReset => continue,
+                _ => return Err(err),
+            }
+        }
     }
     Ok(())
 }
