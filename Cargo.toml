@@ -1,0 +1,21 @@
+[package]
+name = "wiinote"
+version = "0.1.0"
+authors = ["Hugo Manrique <cargo@hugmanrique.me>"]
+edition = "2021"
+description = "Use a Wii Remote as a slide clicker"
+license = "MIT"
+keywords = ["wiimote", "keynote", "clicker"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.56"
+bitflags = { git = "https://github.com/bitflags/bitflags" }
+bluer = { version = "0.15.0", features = ["bluetoothd", "l2cap"] }
+bytes = "1.1.0"
+futures = "0.3.21"
+tokio = { version = "1.18.2", features = ["macros", "rt", "rt-multi-thread", "signal"] }
+# todo: uinput-tokio errors don't implement the std:error::Error trait,
+#       so handling results is painful. Use the sync version for now.
+uinput = "0.1.3"
