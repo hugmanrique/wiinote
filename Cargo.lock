@@ -750,6 +750,7 @@ dependencies = [
  "anyhow",
  "clap 3.1.18",
  "futures-util",
+ "num-traits",
  "tokio",
  "uinput",
  "xwiimote",
