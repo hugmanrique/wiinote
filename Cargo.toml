@@ -10,13 +10,11 @@ keywords = ["wiimote", "keynote", "clicker"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.56"
-bitflags = { git = "https://github.com/bitflags/bitflags" }
-bluer = { version = "0.15.0", features = ["bluetoothd", "l2cap"] }
-bytes = "1.1.0"
-clap = { version = "3.1.18", features = ["derive"] }
-futures = "0.3.21"
-tokio = { version = "1.18.2", features = ["macros", "rt", "rt-multi-thread", "signal"] }
+anyhow = "1.0"
+clap = { version = "3.1", features = ["derive"] }
+futures-util = "0.3"
+tokio = { version = "1.19", features = ["macros", "rt"] }
 # todo: uinput-tokio errors don't implement the std:error::Error trait,
 #       so handling results is painful. Use the sync version for now.
-uinput = "0.1.3"
+uinput = "0.1"
+xwiimote = { path = "../xwiimote", version = "0.2" }

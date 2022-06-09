@@ -1,24 +1,23 @@
 use anyhow::Result;
-use uinput::event::keyboard::{Key, Misc};
-use uinput::{event, Device};
-
-use crate::report::Buttons;
+use uinput::event;
+use uinput::event::keyboard;
+use xwiimote::event::{Key, KeyState};
 
 static DEV_NAME: &str = "Wiinote";
 
-pub struct Keyboard(Device);
+pub struct Keyboard(uinput::Device);
 
 impl Keyboard {
-    pub fn default() -> Result<Self> {
+    pub fn try_default() -> Result<Self> {
         let events = [
-            event::Keyboard::Key(Key::Up),
-            event::Keyboard::Key(Key::Down),
-            event::Keyboard::Key(Key::Left),
-            event::Keyboard::Key(Key::Right),
-            event::Keyboard::Key(Key::Enter),
-            event::Keyboard::Misc(Misc::VolumeUp),
-            event::Keyboard::Key(Key::Esc),
-            event::Keyboard::Misc(Misc::VolumeDown),
+            event::Keyboard::Key(keyboard::Key::Up),
+            event::Keyboard::Key(keyboard::Key::Down),
+            event::Keyboard::Key(keyboard::Key::Left),
+            event::Keyboard::Key(keyboard::Key::Right),
+            event::Keyboard::Key(keyboard::Key::Enter),
+            event::Keyboard::Misc(keyboard::Misc::VolumeUp),
+            event::Keyboard::Key(keyboard::Key::Esc),
+            event::Keyboard::Misc(keyboard::Misc::VolumeDown),
         ];
 
         let mut builder = uinput::default()?.name(DEV_NAME)?;
@@ -29,30 +28,32 @@ impl Keyboard {
         Ok(Self(builder.create()?))
     }
 
-    pub fn update(&mut self, buttons: Buttons) -> Result<()> {
-        let events = buttons.iter().filter_map(|(_, button)| button.key_event());
-        for event in events {
-            self.0.click(&event)?;
+    pub fn update(&mut self, button: &Key, state: &KeyState) -> Result<()> {
+        if let Some(key) = key_event(&button) {
+            match *state {
+                KeyState::Down => self.0.press(&key)?,
+                KeyState::Up => self.0.release(&key)?,
+                _ => {}
+            };
+            self.0.synchronize().map_err(|err| err.into())
+        } else {
+            Ok(()) // The button is not matched to any key, ignore.
         }
-
-        self.0.synchronize().map_err(|err| err.into())
     }
 }
 
-impl Buttons {
-    pub fn key_event(&self) -> Option<event::Keyboard> {
-        Some(match *self {
-            Buttons::UP => event::Keyboard::Key(Key::Up),
-            Buttons::DOWN => event::Keyboard::Key(Key::Down),
-            Buttons::LEFT => event::Keyboard::Key(Key::Left),
-            Buttons::RIGHT => event::Keyboard::Key(Key::Right),
-            Buttons::A => event::Keyboard::Key(Key::Enter),
-            Buttons::B => event::Keyboard::Key(Key::Left),
-            Buttons::PLUS => event::Keyboard::Misc(Misc::VolumeUp),
-            Buttons::HOME => event::Keyboard::Key(Key::Esc),
-            Buttons::MINUS => event::Keyboard::Misc(Misc::VolumeDown),
-            // todo: add events for button combinations
-            _ => return None,
-        })
-    }
+/// Converts the Wii Remote key to a keyboard event.
+pub fn key_event(key: &Key) -> Option<event::Keyboard> {
+    Some(match *key {
+        Key::Up => event::Keyboard::Key(keyboard::Key::Up),
+        Key::Down => event::Keyboard::Key(keyboard::Key::Down),
+        Key::Left => event::Keyboard::Key(keyboard::Key::Left),
+        Key::Right => event::Keyboard::Key(keyboard::Key::Right),
+        Key::A => event::Keyboard::Key(keyboard::Key::Enter),
+        Key::B => event::Keyboard::Key(keyboard::Key::Left),
+        Key::Plus => event::Keyboard::Misc(keyboard::Misc::VolumeUp),
+        Key::Home => event::Keyboard::Key(keyboard::Key::Esc),
+        Key::Minus => event::Keyboard::Misc(keyboard::Misc::VolumeDown),
+        _ => return None,
+    })
 }

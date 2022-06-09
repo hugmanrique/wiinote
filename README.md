@@ -20,6 +20,7 @@ You'll need the following things to build wiinote:
 
 ```bash
 modprobe uinput
+modprobe hid-wiimote
 systemctl enable bluetooth.service
 
 # Allow non-root user to access device file
