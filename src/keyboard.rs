@@ -29,7 +29,7 @@ impl Keyboard {
     }
 
     pub fn update(&mut self, button: &Key, state: &KeyState) -> Result<()> {
-        if let Some(key) = key_event(&button) {
+        if let Some(key) = key_event(button) {
             match *state {
                 KeyState::Down => self.0.press(&key)?,
                 KeyState::Up => self.0.release(&key)?,
