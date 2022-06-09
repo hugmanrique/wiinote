@@ -2,8 +2,7 @@
 
 Use a [Wiimote](https://en.wikipedia.org/wiki/Wii_Remote) as a slide clicker.
 
-Follows a structure similar to the Tokio project's [mini-redis](https://github.com/tokio-rs/mini-redis) example.
-Special thanks to David Herrmann et al. for documenting the [Wiimote HID protocol](https://raw.githubusercontent.com/dvdhrm/xwiimote/master/doc/PROTOCOL).
+Depends on the [Rust bindings](https://github.com/hugmanrique/xwiimote) to the [xwiimote](https://github.com/dvdhrm/xwiimote) library, created by David Herrmann et al.
 
 ## Build
 
